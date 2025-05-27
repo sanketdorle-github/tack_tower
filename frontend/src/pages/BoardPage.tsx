@@ -31,17 +31,25 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Board, Column, Task } from "@/types/board";
+import { BoardHeader } from "@/components/board/BoardHeader";
 
 const BoardPage = () => {
   const navigate = useNavigate();
   const { boardId } = useParams<{ boardId: string }>();
   const { toast } = useToast();
 
-  const [boards, setBoards] = useState<any[]>([]); // Using any for backend response
+  const [boards, setBoards] = useState<Board[]>([]); // Using Board interface instead of any
   const [columns, setColumns] = useState<Column[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const board = boardId ? boards.find((b) => b._id === boardId) : null;
+  const boardFound = boardId ? boards.find((b) => b._id === boardId) : null;
+  
+  // console.log('Board Data Debug:', {
+  //   boardId,
+  //   boards,
+  //   foundBoard: boardFound,
+  //   boardTitle: boardFound?.title
+  // });
 
   // Task Dialog state
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
@@ -456,8 +464,8 @@ const BoardPage = () => {
     );
   }
 
-  if (!boardId || (!loading && !board)) {
-    console.log("in here", board);
+  if (!boardId || (!loading && !boardFound)) {
+    console.log("in here", boardFound);
 
     return (
       <div className="min-h-screen bg-background dark:bg-background">
@@ -484,17 +492,13 @@ const BoardPage = () => {
       <AppHeader />
 
       <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-            {board?.title || "Board"}
-          </h1>
-          <Button
-            onClick={handleAddColumn}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Add Column
-          </Button>
-        </div>
+        
+        {/* //board header */}
+        <BoardHeader
+          boardDet={boardFound}
+          onAddColumn={handleAddColumn}
+          boardId={boardId}
+        />
         {columns.length < 1 ? (
           <div className="w-full min-h-svh flex items-center justify-center bg-red-600">
             <h1>No list Available</h1>

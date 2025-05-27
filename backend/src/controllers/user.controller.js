@@ -170,4 +170,26 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   res.status(response.statusCode).json(response);
 });
 
-export { registerUser, loginUser, getUserProfile, logoutUser };
+// new for search user 
+const searchUsers = asyncHandler(async (req, res) => {
+  const query = req.query.q || req.query.query;
+
+  const currentUserId = req.user?._id; // Optional: if you want to exclude current user
+
+  if (!query || query.trim().length < 3) {
+    throw new ApiError(400, "Query must be at least 3 characters");
+  }
+
+  const users = await User.find({
+    $or: [
+      { name: { $regex: query, $options: "i" } },
+      { email: { $regex: query, $options: "i" } },
+    ],
+    _id: { $ne: currentUserId }, // Exclude the current user (optional)
+  }).select("_id name email");
+
+  const response = new ApiResponse(200, users, "Users fetched successfully");
+  res.status(response.statusCode).json(response);
+});
+
+export { registerUser, loginUser, getUserProfile, logoutUser,searchUsers };

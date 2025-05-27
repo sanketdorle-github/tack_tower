@@ -273,4 +273,22 @@ const userSlice = createSlice({
   },
 });
 
+
+
+
+// userService.ts
+export const searchUsers = async (query: string) => {
+  const response = await axios.get(`${backurl}/api/v1/user/search?q=${query}`,{withCredentials:true});
+  console.log("logging users list",response.data);
+  
+  return response.data.data;
+};
+
+// boardService.ts
+export const addBoardMember = async (boardId: string, userId: string) => {
+  const response = await axios.post(`${backurl}/api/v1/board/add-members`, { userId ,boardId},{
+    withCredentials:true
+  });
+  return response.data.data;
+};
 export default userSlice.reducer;

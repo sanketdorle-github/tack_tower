@@ -45,9 +45,14 @@
 // }
 
 export interface Board {
-  id: string;
+  _id: string;
   title: string;
+  description?: string;
+  createdBy?: string;
+  members?: string[];
   color?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BoardFR {

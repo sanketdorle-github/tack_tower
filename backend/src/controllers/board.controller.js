@@ -183,6 +183,103 @@ const updateBoardPositions = asyncHandler(async (req, res, next) => {
   );
 });
 
+const addBoardMember = asyncHandler(async (req, res, next) => {
+  const { boardId, userId } = req.body;
+
+  // Validate input
+  if (!boardId || !userId) {
+    throw new ApiError(400, "Board ID and User ID are required");
+  }
+
+  // Validate ObjectIds
+  if (!mongoose.Types.ObjectId.isValid(boardId) || !mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ApiError(400, "Invalid Board ID or User ID format");
+  }
+
+  // Find board and check if it exists
+  const board = await Board.findById(boardId);
+  if (!board) {
+    throw new ApiError(404, "Board not found");
+  }
+
+  // Check if the requesting user has permission (must be board creator or admin)
+  if (board.createdBy.toString() !== req.user.userId) {
+    throw new ApiError(403, "You don't have permission to add members to this board");
+  }
+
+  // Find user and check if they exist
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Check if user is already a member using proper MongoDB comparison
+  const isMember = board.members.some(memberId => memberId.toString() === userId);
+  if (isMember) {
+    throw new ApiError(400, "User is already a member of this board");
+  }
+
+  try {
+    // Add user to board's members
+    board.members.push(userId);
+    await board.save();
+
+    // Add board to user's boards
+    if (!user.boards.includes(boardId)) {
+      user.boards.push(boardId);
+      await user.save();
+    }
+
+    // Return the updated board with populated members
+    const updatedBoard = await Board.findById(boardId)
+      .populate('members', 'name email avatar')
+      .exec();
+
+    const response = new ApiResponse(
+      200,
+      updatedBoard.members,
+      "User added to board successfully"
+    );
+    res.json(response);
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Error adding member to board",
+      [],
+      error.stack
+    );
+  }
+});
+
+const getBoardMembers = asyncHandler(async (req, res) => {
+  const { boardId } = req.params;
+  console.log("boardId", boardId);
+
+  if (!mongoose.Types.ObjectId.isValid(boardId)) {
+    throw new ApiError(400, "Invalid board ID");
+  }
+
+  const board = await Board.findById(boardId)
+    .populate('members', 'name email avatar') // Only get necessary fields
+    .exec();
+  console.log("board controller", board);
+  if (!board) {
+    throw new ApiError(404, "Board not found");
+  }
+
+  // Check if the requesting user is a member of the board
+  if (!board.members.some(member => member._id.toString() === req.user.userId)) {
+    throw new ApiError(403, "You don't have permission to view this board's members");
+  }
+
+  const response = new ApiResponse(
+    200, 
+    board.members, 
+    "Board members retrieved successfully"
+  );
+  res.json(response);
+});
+
 export {
   createBoard,
   getAllBoards,
@@ -190,4 +287,6 @@ export {
   updateBoard,
   deleteBoard,
   updateBoardPositions,
+  addBoardMember,
+  getBoardMembers,
 };

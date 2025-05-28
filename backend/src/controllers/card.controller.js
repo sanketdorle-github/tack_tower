@@ -228,13 +228,13 @@ const moveTask = async (req, res) => {
       return res.status(404).json({ message: "Card not found" });
     }
 
-    // If list changed, update the card’s listId
+    // If list changed, update the card's listId
     if (card.listId.toString() !== targetListId) {
       card.listId = targetListId;
       await card.save();
     }
 
-    // Update both lists’ card order
+    // Update both lists' card order
     await List.findByIdAndUpdate(sourceListId, {
       cards: sourceCardOrder,
     });
@@ -312,6 +312,33 @@ const reorderCards = async (req, res) => {
   }
 };
 
+const assignUsersToCard = asyncHandler(async (req, res) => {
+  const { cardId } = req.params;
+  const { userIds } = req.body;
+
+  // Validate input
+  if (!cardId || !userIds || !Array.isArray(userIds)) {
+    throw new ApiError(400, "Card ID and array of user IDs are required");
+  }
+
+  // Find card and check if it exists
+  const card = await Card.findById(cardId);
+  if (!card) {
+    throw new ApiError(404, "Card not found");
+  }
+
+  // Update card with new assigned users
+  card.assignedTo = userIds;
+  await card.save();
+
+  // Fetch updated card with populated user data
+  const updatedCard = await Card.findById(cardId)
+    .populate('assignedTo', 'name email avatar')
+    .exec();
+
+  res.json(new ApiResponse(200, updatedCard, "Users assigned to card successfully"));
+});
+
 export {
   createCard,
   getCardsByList,
@@ -319,4 +346,5 @@ export {
   deleteCard,
   moveTask,
   reorderCards,
+  assignUsersToCard,
 };

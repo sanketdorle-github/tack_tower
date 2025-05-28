@@ -103,6 +103,7 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                       index={index}
                       onEdit={() => onEditTask(task.id, id)}
                       onDelete={() => onDeleteTask(task.id, id)}
+                     
                     />
                   ))}
                   {provided.placeholder}

@@ -260,3 +260,16 @@ export const moveColumn = async (
     throw new Error(error?.response?.data?.message || "Failed to move column");
   }
 };
+
+export const assignUsersToCard = async (cardId: string, userIds: string[]): Promise<any> => {
+  try {
+    const response = await axios.post(
+      `${apiurl}/api/v1/card/${cardId}/assign`,
+      { userIds },
+      { withCredentials: true }
+    );
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error?.response?.data?.message || "Failed to assign users to card");
+  }
+};

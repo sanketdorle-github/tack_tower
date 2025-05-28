@@ -1,4 +1,4 @@
-import express from "express";
+import { Router } from "express";
 import {
   createCard,
   getCardsByList,
@@ -6,9 +6,14 @@ import {
   deleteCard,
   moveTask,
   reorderCards,
+  assignUsersToCard,
 } from "../controllers/card.controller.js";
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router = Router();
+
+// All routes are protected
+router.use(authMiddleware);
 
 // POST /api/cards/:listId - Create a new card in a list
 router.post("/:listId", createCard);
@@ -23,7 +28,11 @@ router.patch("/move/:cardId", moveTask);
 
 // DELETE /api/cards/delete/:cardId - Delete a card
 router.delete("/delete/:cardId", deleteCard);
-//reorder
+
+// Reorder cards
 router.put("/reorder/:cardId", reorderCards);
+
+// Assign users to a card
+router.post("/:cardId/assign", assignUsersToCard);
 
 export default router;

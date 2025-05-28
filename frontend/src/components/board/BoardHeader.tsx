@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { addBoardMember, searchUsers } from "../../store/slices/userSlice";
 import { cn } from "@/lib/utils";
+import axios from "axios";
 
 interface User {
   _id: string;
@@ -65,18 +66,15 @@ export const BoardHeader = ({
   const { data: boardMembers } = useQuery({
     queryKey: ["boardMembers", boardId],
     queryFn: async () => {
-      const response = await fetch(`/api/v1/boards/${boardId}/members`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      const response = await axios.get(`${import.meta.env.VITE_BACK_URL}/api/v1/board/${boardId}/members`, {
+      withCredentials: true,
       });
-      if (!response.ok) {
+      if (!response) {
         throw new Error('Failed to fetch board members');
       }
-      const data = await response.json();
+      const data = response.data;
       return data.data;
-    },
-    enabled: isShareDialogOpen, // Only fetch when dialog is open
+    }
   });
 
   useEffect(() => {

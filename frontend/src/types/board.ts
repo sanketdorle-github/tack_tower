@@ -66,6 +66,13 @@ export interface BoardFR {
   updatedAt: string;
 }
 
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -75,6 +82,7 @@ export interface Task {
   dueDate?: string;
   labels?: string[];
   assignedTo?: string[];
+  assignedUsers?: User[];
   createdAt?: string;
   updatedAt?: string;
 }

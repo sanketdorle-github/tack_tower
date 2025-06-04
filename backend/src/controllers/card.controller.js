@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import { Board } from "../models/Board.js";
+import { User } from "../models/User.js";
 
 // Create a new card in a list
 const createCard = asyncHandler(async (req, res, next) => {
@@ -313,31 +314,121 @@ const reorderCards = async (req, res) => {
 };
 
 const assignUsersToCard = asyncHandler(async (req, res) => {
-  const { cardId } = req.params;
-  const { userIds } = req.body;
+  try {
+    console.log("Data in assigning user to card");
 
-  // Validate input
-  if (!cardId || !userIds || !Array.isArray(userIds)) {
-    throw new ApiError(400, "Card ID and array of user IDs are required");
+    const { userIds, cardId } = req.body;
+
+    if (!cardId || !userIds || !Array.isArray(userIds)) {
+      return res.status(400).json(new ApiError(400, "Card ID and array of user IDs are required"));
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(cardId)) {
+      return res.status(400).json(new ApiError(400, "Invalid card ID format"));
+    }
+
+    const invalidUserIds = userIds.filter(id => !mongoose.Types.ObjectId.isValid(id));
+    if (invalidUserIds.length > 0) {
+      return res.status(400).json(new ApiError(400, `Invalid user IDs: ${invalidUserIds.join(', ')}`));
+    }
+
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json(new ApiError(404, "Card not found"));
+    }
+
+    const currentAssigned = card.assignedTo.map(id => id.toString());
+    const newUsersToAdd = userIds.filter(id => !currentAssigned.includes(id));
+
+    if (newUsersToAdd.length > 0) {
+      card.assignedTo = [...new Set([...card.assignedTo.map(id => id.toString()), ...newUsersToAdd])];
+      await card.save();
+    }
+
+    const updatedCard = await Card.findById(cardId)
+      .populate('assignedTo', 'name email')
+      .exec();
+
+    const message = newUsersToAdd.length > 0
+      ? "Users assigned to card successfully"
+      : "No new users were added; already assigned.";
+
+    return res.status(200).json(new ApiResponse(200, updatedCard, message));
+  } catch (error) {
+    console.error("Error assigning users to card:", error);
+    return res.status(500).json(new ApiError(500, "Internal Server Error"));
+  }
+});
+
+const searchBoardMembers = asyncHandler(async (req, res) => {
+  const { boardId } = req.params;
+  const { query } = req.query;
+
+  // Validate boardId
+  if (!mongoose.Types.ObjectId.isValid(boardId)) {
+    return res.status(400).json(new ApiError(400, "Invalid board ID"));
+  }
+
+  // Validate query
+  if (!query || typeof query !== "string" || query.trim() === "") {
+    return res.status(400).json(new ApiError(400, "Search query is required"));
+  }
+
+  // Find board
+  const board = await Board.findById(boardId);
+  if (!board) {
+    return res.status(404).json(new ApiError(404, "Board not found"));
+  }
+
+  // Search members by name or email
+  const members = await User.find({
+    _id: { $in: board.members },
+    $or: [
+      { name: { $regex: query, $options: "i" } },
+      { email: { $regex: query, $options: "i" } },
+    ],
+  }).select("name email");
+
+  if (!members || members.length === 0) {
+    return res.status(404).json(
+      new ApiError(404, "No board members matched your search query")
+    );
+  }
+
+  // Return matching members
+  return res.status(200).json(
+    new ApiResponse(200, members, "Matching board members found")
+  );
+});
+
+
+const getAssignedMembers = asyncHandler(async (req, res) => {
+  const { cardId } = req.params;
+
+  // Validate cardId
+  if (!mongoose.Types.ObjectId.isValid(cardId)) {
+    return res.status(400).json(new ApiError(400, "Invalid card ID"));
   }
 
   // Find card and check if it exists
-  const card = await Card.findById(cardId);
+  const card = await Card.findById(cardId).populate("assignedTo", "name email");
   if (!card) {
-    throw new ApiError(404, "Card not found");
+    return res.status(404).json(new ApiError(404, "Card not found"));
   }
 
-  // Update card with new assigned users
-  card.assignedTo = userIds;
-  await card.save();
+  // If no assigned members
+  if (!card.assignedTo || card.assignedTo.length === 0) {
+    return res.status(200).json(
+      new ApiResponse(200, [], "No members are currently assigned to this card")
+    );
+  }
 
-  // Fetch updated card with populated user data
-  const updatedCard = await Card.findById(cardId)
-    .populate('assignedTo', 'name email avatar')
-    .exec();
-
-  res.json(new ApiResponse(200, updatedCard, "Users assigned to card successfully"));
+  // Return assigned members
+  return res.status(200).json(
+    new ApiResponse(200, card.assignedTo, "Assigned members retrieved successfully")
+  );
 });
+
 
 export {
   createCard,
@@ -347,4 +438,8 @@ export {
   moveTask,
   reorderCards,
   assignUsersToCard,
+  searchBoardMembers,
+  getAssignedMembers
+
+  
 };

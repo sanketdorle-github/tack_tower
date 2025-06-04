@@ -7,6 +7,8 @@ import {
   moveTask,
   reorderCards,
   assignUsersToCard,
+  searchBoardMembers,
+  getAssignedMembers,
 } from "../controllers/card.controller.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
@@ -14,6 +16,10 @@ const router = Router();
 
 // All routes are protected
 router.use(authMiddleware);
+
+// Assign users to a card
+router.post("/assign-users", assignUsersToCard);
+
 
 // POST /api/cards/:listId - Create a new card in a list
 router.post("/:listId", createCard);
@@ -32,7 +38,10 @@ router.delete("/delete/:cardId", deleteCard);
 // Reorder cards
 router.put("/reorder/:cardId", reorderCards);
 
-// Assign users to a card
-router.post("/:cardId/assign", assignUsersToCard);
+// Search members in a board by name or email
+router.get("/:boardId/search-members", searchBoardMembers);
+
+router.get("/:cardId/assigned-members", getAssignedMembers);
+
 
 export default router;

@@ -32,6 +32,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Board, Column, Task } from "@/types/board";
 import { BoardHeader } from "@/components/board/BoardHeader";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+    
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
 
 const BoardPage = () => {
   const navigate = useNavigate();
@@ -70,6 +79,19 @@ const BoardPage = () => {
     taskId: string;
     columnId: string;
   } | null>(null);
+
+  // Add board members query
+  const { data: boardMembers = [] } = useQuery<User[]>({
+    queryKey: ["boardMembers", boardId],
+    queryFn: async () => {
+      if (!boardId) return [];
+      const response = await axios.get(`${import.meta.env.VITE_BACK_URL}/api/v1/board/${boardId}/members`, {
+        withCredentials: true,
+      });
+      return response.data.data;
+    },
+    enabled: !!boardId,
+  });
 
   // Check auth and fetch board data
   useEffect(() => {
@@ -443,6 +465,101 @@ const BoardPage = () => {
     }
   };
 
+  // Add handleAssignTask function
+  const handleAssignTask = async (taskId: string, users: User[]) => {
+    try {
+      console.log('Debug users:', {
+        users,
+        isArray: Array.isArray(users),
+        type: typeof users
+      });
+
+      if (!Array.isArray(users)) {
+        throw new Error('Users must be an array');
+      }
+
+      const columnId = columns.find(col => 
+        col.tasks.some(task => task.id === taskId)
+      )?.id;
+
+      if (!columnId) {
+        throw new Error("Column not found");
+      }
+
+      const userIds = users.map(u => u._id);
+
+      console.log('Assigning task:', {
+        taskId,
+        userIds,
+        apiUrl: `${import.meta.env.VITE_BACK_URL}/api/v1/card/assign-users`
+      });
+
+      // Optimistic update
+      setColumns(prevColumns => {
+        return prevColumns.map(col => ({
+          ...col,
+          tasks: col.tasks.map(task => 
+            task.id === taskId 
+              ? { ...task, assignedUsers: users }
+              : task
+          )
+        }));
+      });
+
+      // Backend update with correct endpoint and request body
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACK_URL}/api/v1/card/assign-users`,
+        {
+          cardId: taskId,
+          userIds
+        },
+        { 
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Assignment response:', response.data);
+
+      toast({
+        title: "Success",
+        description: "Task assigned successfully",
+      });
+    } catch (error) {
+      console.error('Assignment error:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        response: axios.isAxiosError(error) ? error.response?.data : undefined
+      });
+
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to assign task. Please try again.",
+      });
+
+      // Revert optimistic update on error
+      const originalTask = columns
+        .flatMap(col => col.tasks)
+        .find(task => task.id === taskId);
+
+      if (originalTask) {
+        setColumns(prevColumns => {
+          return prevColumns.map(col => ({
+            ...col,
+            tasks: col.tasks.map(task => 
+              task.id === taskId 
+                ? originalTask
+                : task
+            )
+          }));
+        });
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background dark:bg-background">
@@ -465,7 +582,7 @@ const BoardPage = () => {
   }
 
   if (!boardId || (!loading && !boardFound)) {
-    console.log("in here", boardFound);
+    // console.log("in here", boardFound);
 
     return (
       <div className="min-h-screen bg-background dark:bg-background">
@@ -528,11 +645,13 @@ const BoardPage = () => {
                       title={column.title}
                       tasks={column.tasks}
                       index={index}
+                      boardMembers={boardMembers}
                       onAddTask={handleAddTask}
                       onEditColumn={handleEditColumn}
                       onDeleteColumn={handleDeleteColumn}
                       onEditTask={handleEditTask}
                       onDeleteTask={handleDeleteTask}
+                      onAssignTask={handleAssignTask}
                     />
                   ))}
                   {provided.placeholder}

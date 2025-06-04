@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Draggable, Droppable } from "@hello-pangea/dnd";
 import { MoreHorizontal, Plus } from "lucide-react";
@@ -11,10 +10,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
 interface Task {
   id: string;
   title: string;
   description?: string;
+  assignedUsers?: User[];
 }
 
 interface BoardColumnProps {
@@ -22,11 +29,13 @@ interface BoardColumnProps {
   title: string;
   tasks: Task[];
   index: number;
+  boardMembers: User[];
   onAddTask: (columnId: string) => void;
   onEditColumn: (columnId: string) => void;
   onDeleteColumn: (columnId: string) => void;
   onEditTask: (taskId: string, columnId: string) => void;
   onDeleteTask: (taskId: string, columnId: string) => void;
+  onAssignTask: (taskId: string, users: User[]) => void;
 }
 
 const BoardColumn: React.FC<BoardColumnProps> = ({
@@ -34,11 +43,13 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
   title,
   tasks,
   index,
+  boardMembers,
   onAddTask,
   onEditColumn,
   onDeleteColumn,
   onEditTask,
   onDeleteTask,
+  onAssignTask,
 }) => {
   return (
     <Draggable draggableId={id} index={index}>
@@ -103,7 +114,8 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
                       index={index}
                       onEdit={() => onEditTask(task.id, id)}
                       onDelete={() => onDeleteTask(task.id, id)}
-                     
+                      boardMembers={boardMembers}
+                      onAssign={(users) => onAssignTask(task.id, users)}
                     />
                   ))}
                   {provided.placeholder}

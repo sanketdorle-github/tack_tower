@@ -253,7 +253,7 @@ const addBoardMember = asyncHandler(async (req, res, next) => {
 
 const getBoardMembers = asyncHandler(async (req, res) => {
   const { boardId } = req.params;
-  console.log("boardId", boardId);
+  // console.log("boardId", boardId);
 
   if (!mongoose.Types.ObjectId.isValid(boardId)) {
     throw new ApiError(400, "Invalid board ID");
@@ -262,7 +262,7 @@ const getBoardMembers = asyncHandler(async (req, res) => {
   const board = await Board.findById(boardId)
     .populate('members', 'name email avatar') // Only get necessary fields
     .exec();
-  console.log("board controller", board);
+  // console.log("board controller", board);
   if (!board) {
     throw new ApiError(404, "Board not found");
   }

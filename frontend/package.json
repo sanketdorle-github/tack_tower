@@ -1,17 +1,17 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "Task Stack Tower",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://sanketdorle-github.io/tasktowerstack",
+  "homepage": "https://sanketdorle.github.io/task-track-tower",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "predeploy": "vite build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

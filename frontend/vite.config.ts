@@ -11,9 +11,11 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
+  base: "/task-track-tower/",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -36,5 +36,10 @@ app.use("/api/v1/board", boardRoute);
 app.use("/api/v1/list", listRoute);
 app.use("/api/v1/card", cardRoute);
 
+
+app.get("/check-health", (req, res) => {
+  res.send("The server is working fine!!");
+});
+
 app.use(globalErrorHandler);
 export { app };

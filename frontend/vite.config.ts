@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
-  base: "/task-track-tower/",
+ base: "/task_track_tower/",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

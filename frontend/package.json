@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://sanketdorle-github.github.io/task_track_tower",
+ "homepage": "https://sanketdorle-github.github.io/task_track_tower",
+
   "scripts": {
     "dev": "vite",
     "build": "vite build",

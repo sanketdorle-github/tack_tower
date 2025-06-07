@@ -78,7 +78,8 @@ const loginUser = asyncHandler(async (req, res) => {
     .status(response.statusCode)
     .cookie("token", token, {
       httpOnly: true,
-
+      secure: true, // required in production (HTTPS)
+      sameSite: "None", // required for cross-domain cookie
       maxAge: 24 * 60 * 60 * 1000, // 1 days
     })
     .json(response);
@@ -106,7 +107,6 @@ const logoutUser = asyncHandler(async (req, res) => {
   res.status(response.statusCode).json(response);
 });
 
-
 //update profiles
 
 // Update user profile
@@ -122,15 +122,15 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   // Find and update user
   const user = await User.findByIdAndUpdate(
     userId,
-    { 
-      $set: { 
+    {
+      $set: {
         name,
-        email 
-      } 
+        email,
+      },
     },
-    { 
+    {
       new: true, // Return updated document
-      runValidators: true // Run model validators
+      runValidators: true, // Run model validators
     }
   ).select("-password"); // Exclude password field
 
@@ -158,7 +158,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
     },
-    ...(token && { token }) // Include new token only if generated
+    ...(token && { token }), // Include new token only if generated
   };
 
   const response = new ApiResponse(
@@ -170,7 +170,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   res.status(response.statusCode).json(response);
 });
 
-// new for search user 
+// new for search user
 const searchUsers = asyncHandler(async (req, res) => {
   const query = req.query.q || req.query.query;
 
@@ -192,4 +192,4 @@ const searchUsers = asyncHandler(async (req, res) => {
   res.status(response.statusCode).json(response);
 });
 
-export { registerUser, loginUser, getUserProfile, logoutUser,searchUsers };
+export { registerUser, loginUser, getUserProfile, logoutUser, searchUsers };

@@ -6,22 +6,22 @@ const apiurl = import.meta.env.VITE_BACK_URL;
 // Mock data for boards
 let boards: Board[] = [
   {
-    id: "1",
+    _id: "1",
     title: "Project Alpha",
     color: "bg-purple-500",
   },
   {
-    id: "2",
+    _id: "2",
     title: "Marketing Campaign",
     color: "bg-blue-500",
   },
   {
-    id: "3",
+    _id: "3",
     title: "Website Redesign",
     color: "bg-indigo-500",
   },
   {
-    id: "4",
+    _id: "4",
     title: "Personal Tasks",
     color: "bg-pink-500",
   },
